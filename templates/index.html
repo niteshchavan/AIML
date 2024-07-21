@@ -131,25 +131,42 @@
             const resultContainer = document.getElementById('result');
             resultContainer.innerHTML = ''; // Clear previous results
 
-            if (!result.results || result.results.length === 0) {
+            if (!result.results) {
                 resultContainer.innerHTML = '<p>No results found.</p>';
                 return;
             }
 
-            result.results.forEach((documentText, index) => {
+            if (typeof result.results === 'string') {
+                // Simple result case
                 const docContainer = document.createElement('div');
                 docContainer.classList.add('document');
 
                 const docTitle = document.createElement('h3');
-                docTitle.textContent = `Document ${index + 1}`;
+                docTitle.textContent = 'Result';
                 docContainer.appendChild(docTitle);
 
                 const docText = document.createElement('pre');
-                docText.textContent = documentText;
+                docText.textContent = result.results;
                 docContainer.appendChild(docText);
 
                 resultContainer.appendChild(docContainer);
-            });
+            } else if (Array.isArray(result.results)) {
+                // Multiple documents case
+                result.results.forEach((documentText, index) => {
+                    const docContainer = document.createElement('div');
+                    docContainer.classList.add('document');
+
+                    const docTitle = document.createElement('h3');
+                    docTitle.textContent = `Document ${index + 1}`;
+                    docContainer.appendChild(docTitle);
+
+                    const docText = document.createElement('pre');
+                    docText.textContent = documentText;
+                    docContainer.appendChild(docText);
+
+                    resultContainer.appendChild(docContainer);
+                });
+            }
         }
     </script>
 </body>

@@ -48,13 +48,22 @@ def query():
     data = request.get_json()
     query_text = data.get("query_text", "")
     print(query_text)
-    #docs = db.similarity_search(query_text, k=5)
+    docs = db.similarity_search(query_text, k=5)
+    context = "\n\n".join([doc.page_content for doc in docs])
+    #context = "todays date is 24 july 2024"
+    print(context)
     #results = [doc.page_content for doc in docs]
-    prompt_template = ChatPromptTemplate.from_messages(
-    [("system", "You are a bot"), ("human", query_text)] )
-    chain = prompt_template | llm
-    results = chain.invoke({"query": query_text})
+    prompt_template = ChatPromptTemplate.from_messages([("system", "You are a bot you should reply in 100 words or less"), ("human", "{context}\n\nQ: {query}\nA:")] )
+    formatted_prompt = prompt_template.format(context=context, query=query_text)
+    #results = llm(formatted_prompt)
+    # Create a properly structured message dictionary
+    message = {
+        "role": "user",
+        "content": formatted_prompt
+    }
     
+    results = llm.invoke([message])
+    print(results)
     return jsonify({'results': results}), 200
 
 if __name__ == "__main__":
