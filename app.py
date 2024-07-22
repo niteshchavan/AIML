@@ -88,7 +88,7 @@ def query():
         )
     relevant_documents = retriever.invoke(query_text)
     #print(relevant_documents)
-    results1 = [doc.page_content for doc in relevant_documents]
+    results = [doc.page_content for doc in relevant_documents]
     
     # Extract metadata and content for JSON serialization
     serialized_documents = [
@@ -98,13 +98,8 @@ def query():
         }
         for doc in relevant_documents
     ]
-    result = "test"
-    combined_results = {
-        'response': results1,
-        'documents': results1
-        
-    }
-    return jsonify({'results': combined_results }), 200
+
+    return jsonify({'results': results }), 200
 
 
 
