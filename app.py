@@ -75,6 +75,7 @@ def query():
         )
     relevant_documents = retriever.invoke(query_text)
     results = "\n\n".join([doc.page_content for doc in relevant_documents])
+    print(results)
     formatted_prompt = prompt_template.format(context=results, query=query_text)
         # Create a properly structured message dictionary
     message = {
