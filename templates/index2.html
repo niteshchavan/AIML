@@ -136,40 +136,40 @@
         return;
     }
 
-   // Display documents (results1)
-    if (result.results) {
-        result.results.forEach((documentText, index) => {
-            const docContainer = document.createElement('div');
-            docContainer.classList.add('document');
+//    // Display documents (results1)
+//     if (result.results) {
+//         result.results.forEach((documentText, index) => {
+//             const docContainer = document.createElement('div');
+//             docContainer.classList.add('document');
 
-            const docTitle = document.createElement('h3');
-            docTitle.textContent = `Document ${index + 1}`;
-            docContainer.appendChild(docTitle);
+//             const docTitle = document.createElement('h3');
+//             docTitle.textContent = `Document ${index + 1}`;
+//             docContainer.appendChild(docTitle);
 
-            const docText = document.createElement('pre');
-            docText.textContent = documentText;
-            docContainer.appendChild(docText);
+//             const docText = document.createElement('pre');
+//             docText.textContent = documentText;
+//             docContainer.appendChild(docText);
 
-            resultContainer.appendChild(docContainer);
-        });
+//             resultContainer.appendChild(docContainer);
+//         });
+//     }
+
+    //Display language model response (results)
+    if (result) {
+        console.log(result)
+        const responseContainer = document.createElement('div');
+        responseContainer.classList.add('document');
+
+        const responseTitle = document.createElement('h3');
+        responseTitle.textContent = 'Response';
+        responseContainer.appendChild(responseTitle);
+
+        const responseText = document.createElement('pre');
+        responseText.textContent = result.results;
+        responseContainer.appendChild(responseText);
+
+        resultContainer.appendChild(responseContainer);
     }
-
-    // //Display language model response (results)
-    // if (result) {
-    //     console.log(result)
-    //     const responseContainer = document.createElement('div');
-    //     responseContainer.classList.add('document');
-
-    //     const responseTitle = document.createElement('h3');
-    //     responseTitle.textContent = 'Response';
-    //     responseContainer.appendChild(responseTitle);
-
-    //     const responseText = document.createElement('pre');
-    //     responseText.textContent = result.results;
-    //     responseContainer.appendChild(responseText);
-
-    //     resultContainer.appendChild(responseContainer);
-    // }
 }
     </script>
 </body>

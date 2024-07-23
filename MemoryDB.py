@@ -26,9 +26,7 @@ def chat():
     user_message = request.json.get('message')
     print(user_message)
 
-    llm_response = runnable_with_history.invoke(
-    [HumanMessage(content=user_message)],
-    config={"configurable": {"session_id": "1"}},)
+    llm_response = runnable_with_history.invoke([HumanMessage(content=user_message)],config={"configurable": {"session_id": "1"}},)
     
     print(llm_response.content)
     return jsonify({'response': llm_response.content})
