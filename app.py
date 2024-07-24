@@ -17,6 +17,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 chroma_db = 'chromadb'
 
 embedding_function = HuggingFaceEmbeddings(model_name='all-mpnet-base-v2')
+
 db = Chroma(persist_directory=chroma_db, embedding_function=embedding_function)
 
 #Define Model
@@ -67,24 +68,32 @@ def query():
     data = request.get_json()
     query_text = data.get("query_text", "")
     retriever = db.as_retriever(
-            search_type="similarity_score_threshold",
+        search_type="similarity_score_threshold",
             search_kwargs={
                 "k": 1,
                 "score_threshold": 0.1,
             },
-        )
+    )
+    print(retriever)
     relevant_documents = retriever.invoke(query_text)
+    
     results = "\n\n".join([doc.page_content for doc in relevant_documents])
+    # Combine page content with metadata into a formatted string
+    #results = "\n\n".join(
+    #    f"Page {doc.metadata.get('page', 'Unknown')}:\n{doc.page_content}"
+    #    for doc in relevant_documents
+    #)
     print(results)
     formatted_prompt = prompt_template.format(context=results, query=query_text)
-        # Create a properly structured message dictionary
-    message = {
-        "role": "user",
-        "content": formatted_prompt
-    }
+    
+    print(formatted_prompt)
     llm_response = runnable_with_history.invoke([HumanMessage(content=formatted_prompt)],config={"configurable": {"session_id": "1"}},)
-    print(llm_response.content)
+    print(llm_response)
     return jsonify({'results': llm_response.content}), 200
+    #llm_response = 'test'
+    #print(llm_response)
+    #print(formatted_prompt)
+    #return jsonify({'results': results}), 200
 
 
 if __name__ == "__main__":
