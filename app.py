@@ -1,30 +1,26 @@
-from langchain_community.document_loaders.recursive_url_loader import RecursiveUrlLoader
-from bs4 import BeautifulSoup as Soup
-from flask import Flask, request, render_template, jsonify
-
 import re
-import os
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders.recursive_url_loader import RecursiveUrlLoader
+from bs4 import BeautifulSoup
 
-app = Flask(__name__)
 
-app.config['UPLOAD_FOLDER'] = 'uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-chroma_db = 'chromadb'
+def bs4_extractor(html: str) -> str:
+    soup = BeautifulSoup(html, "lxml")
+    return re.sub(r"\n\n+", "\n\n", soup.text).strip()
 
-url = "https://www.pitambari.com/"
-loader = RecursiveUrlLoader(
-    url=url, max_depth=2, extractor=lambda x: Soup(x, "html.parser").text
+
+loader = RecursiveUrlLoader("https://math.berkeley.edu/wp/", extractor=bs4_extractor)
+docs = loader.load_and_split()
+print([doc.page_content for doc in docs])
+
+
+
+
+# Split the cleaned documents into chunks
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1024, chunk_overlap=80, length_function=len, is_separator_regex=False
 )
-docs = loader.load()
-print(len(docs))
+pages = loader.load_and_split()
+chunks = text_splitter.split_documents(pages)
 
 #print(docs)
-#print(docs[0].page_content)
-
-def clean_text(text):
-    return re.sub(r'\n+', ' ', text).strip()
-
-#cleaned_docs = clean_text(docs.page_content)
-#print(cleaned_docs)
-
-results = clean_text([doc.page_content for doc in docs])
