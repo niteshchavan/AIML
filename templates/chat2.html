@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        .chat-message {
+            margin: 5px 0;
+        }
+        .chat-message.user {
+            text-align: right;
+            color: blue;
+        }
+        .chat-message.ai {
+            text-align: left;
+            color: green;
+        }
+        .chat-input {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Chat Interface</h1>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- Chat messages will be appended here -->
+        </div>
+
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="Type your message here..." />
+            <button id="sendMessage">Send</button>
+        </div>
+    </div>
+    
+    <script>
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query_text: "" }) // Empty query to get history
+                });
+                const messages = await response.json();
+                if (messages) {
+                    messages.forEach(msg => appendMessage(msg.message, msg.speaker.toLowerCase()));
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        document.getElementById('sendMessage').addEventListener('click', async function() {
+            const chatInput = document.getElementById('chatInput');
+            const messageText = chatInput.value;
+            if (messageText.trim() === '') {
+                return;
+            }
+
+            // Display user message
+            appendMessage(messageText, 'user');
+
+            try {
+                const response = await fetch('/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query_text: messageText })
+                });
+                const messages = await response.json();
+                if (messages) {
+                    // Display AI response
+                    messages.forEach(msg => appendMessage(msg.message, msg.speaker.toLowerCase()));
+                }
+            } catch (error) {
+                console.error('Error querying collection:', error);
+                alert('Error querying collection.');
+            }
+
+            chatInput.value = ''; // Clear input field
+        });
+
+        function appendMessage(message, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('chat-message', sender);
+            messageElement.textContent = message;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+        }
+
+        // Load chat history on page load
+        window.onload = loadChatHistory;
+    </script>
+</body>
+</html>
