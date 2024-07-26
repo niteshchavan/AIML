@@ -35,6 +35,13 @@
 </head>
 <body>
     <div class="container">
+        <h1>Enter URL to Process</h1>
+        <form id="urlForm" action="/geturl" method="post">
+            <label for="url">URL:</label>
+            <input type="text" id="url" name="url" required>
+            <button type="submit">Submit</button>
+        </form>
+
         <h1>PDF Upload and Query</h1>
         <form id="uploadForm" enctype="multipart/form-data">
             <label for="file">Choose a PDF file to upload:</label>
@@ -103,7 +110,24 @@
                 alert('Error scanning OCR.');
             }
         });
-
+       document.getElementById('urlForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            fetch('/geturl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
         document.getElementById('queryForm').addEventListener('submit', async function(event) {
             event.preventDefault();
             const queryText = document.getElementById('query_text').value;
