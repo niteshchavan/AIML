@@ -16,7 +16,7 @@ llm = ChatOllama(model="qwen2:0.5b")
 
 prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", "You are a helpful assistant."),
+        ("system", "You are a helpful assistant. Your name is Jarvis"),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{question}"),
     ]
