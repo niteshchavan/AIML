@@ -55,24 +55,6 @@
     </div>
     
     <script>
-        async function loadChatHistory() {
-            try {
-                const response = await fetch('/query', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ query_text: "" }) // Empty query to get history
-                });
-                const messages = await response.json();
-                if (messages) {
-                    messages.forEach(msg => appendMessage(msg.message, msg.speaker.toLowerCase()));
-                }
-            } catch (error) {
-                console.error('Error loading chat history:', error);
-            }
-        }
-
         document.getElementById('sendMessage').addEventListener('click', async function() {
             const chatInput = document.getElementById('chatInput');
             const messageText = chatInput.value;
@@ -91,11 +73,15 @@
                     },
                     body: JSON.stringify({ query_text: messageText })
                 });
-                const messages = await response.json();
-                if (messages) {
-                    // Display AI response
-                    messages.forEach(msg => appendMessage(msg.message, msg.speaker.toLowerCase()));
+                const responseData = await response.json();
+                
+                // Assuming responseData contains a message field
+                if (responseData.message) {
+                    appendMessage(responseData.message, 'ai');
+                } else {
+                    console.error('Invalid response format');
                 }
+
             } catch (error) {
                 console.error('Error querying collection:', error);
                 alert('Error querying collection.');
@@ -113,8 +99,7 @@
             chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
         }
 
-        // Load chat history on page load
-        window.onload = loadChatHistory;
+
     </script>
 </body>
 </html>

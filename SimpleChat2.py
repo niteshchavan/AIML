@@ -53,30 +53,18 @@ def query():
     #chat_message_history.add_user_message(query_text)
     #chat_message_history.add_ai_message("Hi")
     config = {"configurable": {"session_id": "1"}}
-    chain_with_history.invoke({"question": query_text}, config=config)
-
+    response = chain_with_history.invoke({"question": query_text}, config=config)
+    print(response.content)
 
 
 
     messages = chat_message_history.messages
-    result = [doc.content for doc in messages]
-    last_10_results = result[-1:]
+    print(messages)
+    #result = [doc.content for doc in response]
+    #print(result)
 
-    structured_messages = []
-
-    # Iterate over the result list and alternate between Human and AI
-    for i, message in enumerate(last_10_results):
-        if i % 2 == 0:
-            speaker = "Human"
-        else:
-            speaker = "AI"
-        
-        structured_messages.append({"speaker": speaker, "message": message})
-
-    print(structured_messages)
-
-  
-    return jsonify(structured_messages), 200
+ 
+    return jsonify({'message': response.content}), 200
 
 
 
