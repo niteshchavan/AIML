@@ -8,6 +8,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.document_loaders.recursive_url_loader import RecursiveUrlLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_core.messages import HumanMessage
 import re
 import logging
 
@@ -23,20 +24,31 @@ chat_message_history = SQLChatMessageHistory(
     session_id=session_id, connection_string=connection_string
 )
 
+
+
 # Define Model
 llm = ChatOllama(model="qwen2:0.5b")
 
-# Define Prompt
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", "You are a helpful assistant. Your name is Jarvis"),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{context}\n\nQ: {question}\nA:"),
+# Create Prompt Template
+prompt_template = ChatPromptTemplate.from_messages([
+    ("system", "You are a bot your name is Alice you should reply in 100 words or less"), 
+    MessagesPlaceholder(variable_name="history"),
+    ("human", "{context}\n\nQ: {question}\nA:")
     ]
 )
 
+#Memory Management
+def get_session_history(session_id):
+    print(session_id)
+    return SQLChatMessageHistory(session_id, "sqlite:///memory.db")
+    
+runnable_with_history = RunnableWithMessageHistory(
+    llm,
+    get_session_history,
+)
+
 # Create Chain with History
-chain = prompt | llm
+chain = prompt_template | llm
 
 chain_with_history = RunnableWithMessageHistory(
     chain,
@@ -63,55 +75,57 @@ app = Flask(__name__)
 def index():
     return render_template('chat3.html')
 
+
+
+
 @app.route('/query', methods=['POST'])
 def query():
-    try:
-        data = request.get_json()
-        query_text = data.get("query_text", "")
-        
-        if not query_text:
-            return jsonify({'error': 'Query text is required'}), 400
-        
-        logger.info(f"Received query: {query_text}")
-        retriever = db.as_retriever(
-            search_type="similarity_score_threshold",
-                search_kwargs={
-                    "k": 2,
-                    "score_threshold": 0.1,
-                },
-        )
-        relevant_documents = retriever.invoke(query_text)
-        results = "\n\n".join([doc.page_content for doc in relevant_documents])
-        # Invoke chain with history
-        config = {"configurable": {"session_id": session_id}}
-        response = chain_with_history.invoke({"question": query_text, "context": results}, config=config)
-        
-        # Return the AI response
-        return jsonify({'message': response.content}), 200
+    data = request.get_json()
+    query_text = data.get("query_text", "")
+    print(query_text)
+    retriever = db.as_retriever(
+        search_type="similarity_score_threshold",
+            search_kwargs={
+                "k": 2,
+                "score_threshold": 0.1,
+            },
+    )
+    relevant_documents = retriever.invoke(query_text)
+    
+    results = "\n\n".join([doc.page_content for doc in relevant_documents])
 
-    except Exception as e:
-        logger.error(f"Error processing request: {e}")
-        return jsonify({'error': 'Internal Server Error'}), 500
+    formatted_prompt = prompt_template.format(context=results, question=query_text)
+    response = runnable_with_history.invoke([HumanMessage(content=formatted_prompt)],config={"configurable": {"session_id": "1"}},)
+    messages = chat_message_history.messages
+    print(messages)
+
+    return jsonify({'message': response.content}), 200
+    
 
 
 @app.route('/geturl', methods=['POST'])
 def geturl():
-    data = request.get_json()
-    url = data.get('url')
-    if not url:
-        return jsonify({'message': 'No URL provided'}), 400
+    try:
+        data = request.get_json()
+        url = data.get('url')
+        if not url:
+            return jsonify({'error': 'No URL provided'}), 400
+
+        loader = RecursiveUrlLoader(url, extractor=bs4_extractor)
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1024, chunk_overlap=80, length_function=len, is_separator_regex=False
+        )
+        pages = loader.load_and_split(text_splitter=text_splitter)
+
+        Chroma.from_documents(pages, embedding_function, persist_directory=chroma_db)
         
-    loader = RecursiveUrlLoader(url, extractor=bs4_extractor)
+        return jsonify({'message': f'URL uploaded successfully'}), 200
 
-    # Split the cleaned documents into chunks
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1024, chunk_overlap=80, length_function=len, is_separator_regex=False
-    )
-    pages = loader.load_and_split(text_splitter=text_splitter)
+    except Exception as e:
+        logger.error(f"Error processing URL: {e}")
+        return jsonify({'error': 'Failed to process URL'}), 500
 
-    Chroma.from_documents(pages, embedding_function, persist_directory=chroma_db)
-
-    return jsonify({'message': f'Url {url} uploaded successfully'})
 
 
 if __name__ == "__main__":

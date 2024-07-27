@@ -62,7 +62,7 @@ def geturl():
 
     Chroma.from_documents(pages, embedding_function, persist_directory=chroma_db)
 
-    return jsonify({'message': f'Url {url} uploaded successfully'})
+    return jsonify({'message': f'Url uploaded successfully'})
 
 
 @app.route('/query', methods=['POST'])
